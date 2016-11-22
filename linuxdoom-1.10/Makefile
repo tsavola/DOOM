@@ -6,9 +6,9 @@
 #
 CC=  gcc  # gcc or g++
 
-CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM 
-LDFLAGS=-L/usr/X11R6/lib
-LIBS=-lXext -lX11 -lnsl -lm
+CFLAGS=-g -Wall -DNORMALUNIX -DLINUX -m32 -std=gnu99 -O3 -Wno-unused-const-variable
+LDFLAGS=
+LIBS=
 
 # subdirectory for objects
 O=linux
@@ -19,9 +19,9 @@ OBJS=				\
 		$(O)/doomstat.o		\
 		$(O)/dstrings.o		\
 		$(O)/i_system.o		\
-		$(O)/i_sound.o		\
-		$(O)/i_video.o		\
-		$(O)/i_net.o			\
+		$(O)/headless_sound.o	\
+		$(O)/headless_video.o	\
+		$(O)/headless_net.o		\
 		$(O)/tables.o			\
 		$(O)/f_finale.o		\
 		$(O)/f_wipe.o 		\
@@ -88,6 +88,7 @@ $(O)/linuxxdoom:	$(OBJS) $(O)/i_main.o
 	-o $(O)/linuxxdoom $(LIBS)
 
 $(O)/%.o:	%.c
+	mkdir -p $(O)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 #############################################################
