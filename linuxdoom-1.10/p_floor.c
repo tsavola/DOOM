@@ -206,7 +206,7 @@ T_MovePlane
 //
 // MOVE A FLOOR TO IT'S DESTINATION (UP OR DOWN)
 //
-void T_MoveFloor(floormove_t* floor)
+void T_MoveFloor(floormove_t* floor, void* dummy)
 {
     result_e	res;
 	

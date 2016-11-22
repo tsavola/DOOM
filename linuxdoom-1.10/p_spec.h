@@ -179,9 +179,9 @@ typedef struct
 #define SLOWDARK			35
 
 void    P_SpawnFireFlicker (sector_t* sector);
-void    T_LightFlash (lightflash_t* flash);
+void    T_LightFlash (lightflash_t* flash, void* dummy);
 void    P_SpawnLightFlash (sector_t* sector);
-void    T_StrobeFlash (strobe_t* flash);
+void    T_StrobeFlash (strobe_t* flash, void* dummy);
 
 void
 P_SpawnStrobeFlash
@@ -197,7 +197,7 @@ EV_LightTurnOn
 ( line_t*	line,
   int		bright );
 
-void    T_Glow(glow_t* g);
+void    T_Glow(glow_t* g, void* dummy);
 void    P_SpawnGlowingLight(sector_t* sector);
 
 
@@ -308,7 +308,7 @@ typedef struct
 
 extern plat_t*	activeplats[MAXPLATS];
 
-void    T_PlatRaise(plat_t*	plat);
+void    T_PlatRaise(plat_t*	plat, void* dummy);
 
 int
 EV_DoPlat
@@ -380,7 +380,7 @@ EV_DoLockedDoor
   vldoor_e	type,
   mobj_t*	thing );
 
-void    T_VerticalDoor (vldoor_t* door);
+void    T_VerticalDoor (vldoor_t* door, void* dummy);
 void    P_SpawnDoorCloseIn30 (sector_t* sec);
 
 void
@@ -524,7 +524,7 @@ EV_DoCeiling
 ( line_t*	line,
   ceiling_e	type );
 
-void    T_MoveCeiling (ceiling_t* ceiling);
+void    T_MoveCeiling (ceiling_t* ceiling, void* dummy);
 void    P_AddActiveCeiling(ceiling_t* c);
 void    P_RemoveActiveCeiling(ceiling_t* c);
 int	EV_CeilingCrushStop(line_t* line);
@@ -626,7 +626,7 @@ EV_DoFloor
 ( line_t*	line,
   floor_e	floortype );
 
-void T_MoveFloor( floormove_t* floor);
+void T_MoveFloor( floormove_t* floor, void* dummy);
 
 //
 // P_TELEPT

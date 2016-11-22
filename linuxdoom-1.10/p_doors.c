@@ -60,7 +60,7 @@ slidename_t	slideFrameNames[MAXSLIDEDOORS] =
 //
 // T_VerticalDoor
 //
-void T_VerticalDoor (vldoor_t* door)
+void T_VerticalDoor (vldoor_t* door, void* dummy)
 {
     result_e	res;
 	

@@ -930,9 +930,7 @@ void M_Episode(int choice)
     if ( (gamemode == registered)
 	 && (choice > 2))
     {
-      fprintf( stderr,
-	       "M_Episode: 4th episode requires UltimateDOOM\n");
-      choice = 0;
+	    abort();
     }
 	 
     epi = choice;
@@ -1132,9 +1130,6 @@ void M_ChangeDetail(int choice)
 {
     choice = 0;
     detailLevel = 1 - detailLevel;
-
-    // FIXME - does not work. Remove anyway?
-    fprintf( stderr, "M_ChangeDetail: low detail mode n.a.\n");
 
     return;
     

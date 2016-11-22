@@ -49,7 +49,7 @@ ceiling_t*	activeceilings[MAXCEILINGS];
 // T_MoveCeiling
 //
 
-void T_MoveCeiling (ceiling_t* ceiling)
+void T_MoveCeiling (ceiling_t* ceiling, void* dummy)
 {
     result_e	res;
 	

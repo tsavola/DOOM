@@ -778,7 +778,7 @@ void A_Light2 (player_t *player, pspdef_t *psp)
 // A_BFGSpray
 // Spawn a BFG explosion on every monster in view
 //
-void A_BFGSpray (mobj_t* mo) 
+void A_BFGSpray (mobj_t* mo, void* dummy) 
 {
     int			i;
     int			j;

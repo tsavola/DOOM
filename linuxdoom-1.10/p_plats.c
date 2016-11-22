@@ -49,7 +49,7 @@ plat_t*		activeplats[MAXPLATS];
 //
 // Move a plat up and down
 //
-void T_PlatRaise(plat_t* plat)
+void T_PlatRaise(plat_t* plat, void* dummy)
 {
     result_e	res;
 	

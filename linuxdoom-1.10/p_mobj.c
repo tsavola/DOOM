@@ -75,7 +75,7 @@ P_SetMobjState
 	// Modified handling.
 	// Call action functions when the state is set
 	if (st->action.acp1)		
-	    st->action.acp1(mobj);	
+	    st->action.acp1(mobj, NULL);	
 	
 	state = st->nextstate;
     } while (!mobj->tics);
@@ -412,7 +412,7 @@ P_NightmareRespawn (mobj_t* mobj)
 //
 // P_MobjThinker
 //
-void P_MobjThinker (mobj_t* mobj)
+void P_MobjThinker (mobj_t* mobj, void* dummy)
 {
     // momentum movement
     if (mobj->momx

@@ -43,7 +43,7 @@ rcsid[] = "$Id: p_lights.c,v 1.5 1997/02/03 22:45:11 b1 Exp $";
 //
 // T_FireFlicker
 //
-void T_FireFlicker (fireflicker_t* flick)
+void T_FireFlicker (fireflicker_t* flick, void* dummy)
 {
     int	amount;
 	
@@ -95,7 +95,7 @@ void P_SpawnFireFlicker (sector_t*	sector)
 // T_LightFlash
 // Do flashing lights.
 //
-void T_LightFlash (lightflash_t* flash)
+void T_LightFlash (lightflash_t* flash, void* dummy)
 {
     if (--flash->count)
 	return;
@@ -152,7 +152,7 @@ void P_SpawnLightFlash (sector_t*	sector)
 //
 // T_StrobeFlash
 //
-void T_StrobeFlash (strobe_t*		flash)
+void T_StrobeFlash (strobe_t*		flash, void* dummy)
 {
     if (--flash->count)
 	return;
@@ -311,7 +311,7 @@ EV_LightTurnOn
 // Spawn glowing light
 //
 
-void T_Glow(glow_t*	g)
+void T_Glow(glow_t*	g, void* dummy)
 {
     switch(g->direction)
     {

@@ -4,24 +4,28 @@
 #
 # $Log:$
 #
-CC=  gcc  # gcc or g++
+CC=  clang
 
-CFLAGS=-g -Wall -DNORMALUNIX -DLINUX # -DUSEASM 
-LDFLAGS=-L/usr/X11R6/lib
-LIBS=-lXext -lX11 -lnsl -lm
+CPPFLAGS=-nostdlibinc -I$(GATEDIR)/include -Ilibc -DNORMALUNIX -DLINUX
+CFLAGS=--target=wasm32-unknown-unknown -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable
+LDFLAGS=-nostdlib -Wl,--entry=D_DoomMain -Wl,--allow-undefined-file=gate_abi.txt
+LIBS=
 
 # subdirectory for objects
 O=linux
 
 # not too sophisticated dependency
 OBJS=				\
+		$(O)/libc.o \
+		$(O)/libc/printf/printf.o \
 		$(O)/doomdef.o		\
 		$(O)/doomstat.o		\
 		$(O)/dstrings.o		\
 		$(O)/i_system.o		\
-		$(O)/i_sound.o		\
-		$(O)/i_video.o		\
-		$(O)/i_net.o			\
+		$(O)/gate_sound.o \
+		$(O)/gate_video.o \
+		$(O)/gate_net.o \
+		$(O)/gate_support.o \
 		$(O)/tables.o			\
 		$(O)/f_finale.o		\
 		$(O)/f_wipe.o 		\
@@ -77,18 +81,19 @@ OBJS=				\
 		$(O)/info.o				\
 		$(O)/sounds.o
 
-all:	 $(O)/linuxxdoom
+all:	 $(O)/doom.wasm
 
 clean:
 	rm -f *.o *~ *.flc
 	rm -f linux/*
 
-$(O)/linuxxdoom:	$(OBJS) $(O)/i_main.o
+$(O)/doom.wasm:	$(OBJS) $(O)/i_main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
-	-o $(O)/linuxxdoom $(LIBS)
+	-o $(O)/doom.wasm $(LIBS)
 
-$(O)/%.o:	%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+$(O)/%.o:	%.c $(wildcard *.h libc/*.h) Makefile
+	@ mkdir -p $(dir $@)
+	$(CC) $(CPPFLAGS) $(CFLAGS) -c $< -o $@
 
 #############################################################
 #

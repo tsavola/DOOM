@@ -165,12 +165,11 @@ void I_Error (char *error, ...)
 
     // Message first.
     va_start (argptr,error);
-    fprintf (stderr, "Error: ");
-    vfprintf (stderr,error,argptr);
-    fprintf (stderr, "\n");
+    __gate_debug_str ("Error: ");
+    char buf[256];
+    int n = vsnprintf (buf,sizeof buf,error,argptr);
+    __gate_debug_str ("\n");
     va_end (argptr);
-
-    fflush( stderr );
 
     // Shutdown. Here might be other errors.
     if (demorecording)
