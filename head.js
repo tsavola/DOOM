@@ -130,11 +130,25 @@ function DOOM() {
 
 	var messageType = "github.com/tsavola/npipe";
 	var session = NinchatClient.newSession();
+	var peerUserId;
+	var channelId;
 	var myUserId;
-	var peerUserId = location.hash.substring(1);
+	var myUserAuth;
+
+	var tokens = location.hash.substring(1).split("/");
+	if (tokens.length >= 1) {
+		peerUserId = tokens[0];
+	}
+	if (tokens.length >= 2) {
+		channelId = tokens[1];
+	}
+	if (tokens.length >= 4) {
+		myUserId = tokens[2];
+		myUserAuth = tokens[3];
+	}
 
 	if (!peerUserId) {
-		alert("Specify peer user id in URL hash");
+		alert("URL hash format: #peer-user-id[/channel-id[/my-user-id/my-user-auth]]");
 		return;
 	}
 
@@ -206,26 +220,43 @@ function DOOM() {
 		var header = {
 			action:       "send_message",
 			action_id:    null,
-			user_id:      peerUserId,
 			message_type: messageType,
 			message_fold: true,
 			message_ttl:  0.1
 		};
 
+		if (channelId)
+			header.channel_id = channelId;
+		else
+			header.user_id = peerUserId;
+
 		session.send(header, [buffer]);
 	}
+
+	var sessionCreated = false;
 
 	session.onSessionEvent(function(header) {
 		switch (header.event) {
 		case "session_created":
-			if (myUserId) {
+			if (sessionCreated) {
 				session.close();
 				alert("session lost");
 				return;
 			}
 
+			sessionCreated = true;
 			myUserId = header.user_id;
-			send();
+
+			if (channelId) {
+				if (!myUserAuth) {
+					session.send({
+						action:     "follow_channel",
+						channel_id: channelId
+					});
+				}
+			} else {
+				send();
+			}
 			break;
 
 		default:
@@ -240,14 +271,18 @@ function DOOM() {
 			if (header.message_user_id == myUserId)
 				break; // reply
 
-			if (header.user_id == peerUserId) {
-				if (payload.length == 1 && payload[0].byteLength == 0) {
-					session.close();
-					alert("The End");
-				} else {
-					receive(payload);
+			var forMe = false;
+
+			if (channelId)
+				forMe = (header.channel_id == channelId && header.message_user_id == peerUserId);
+			else
+				forMe = (header.user_id == peerUserId);
+
+			if (forMe) {
+				receive(payload);
+
+				if (myUserAuth)
 					send();
-				}
 			}
 			break;
 
@@ -266,9 +301,16 @@ function DOOM() {
 		console.log("client:", message);
 	});
 
-	session.setParams({
+	var params = {
 		message_types: [messageType]
-	});
+	};
+
+	if (myUserId) {
+		params.user_id = myUserId;
+		params.user_auth = myUserAuth;
+	}
+
+	session.setParams(params);
 
 	session.open();
 }

@@ -20,7 +20,7 @@ SCALE = 4
 
 READ_TIMEOUT = 3
 
-GRAB = True
+GRAB = False
 
 grabbed = False
 
@@ -81,7 +81,8 @@ def main():
                 elif event.type == QUIT:
                     sys.exit()
 
-            proc.stdin.write(pack("<I", 4 + len(evinfos)) + evinfos)
+            if not os.environ.get("PASSIVE"):
+                proc.stdin.write(pack("<I", 4 + len(evinfos)) + evinfos)
 
             header = read_full(stdout_fd, 16, ungrab)
             size, typ, width, height = unpack("<IIII", header)
