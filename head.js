@@ -250,13 +250,11 @@ function DOOM() {
 			sessionCreated = true;
 			myUserId = header.user_id;
 
-			if (channelId) {
-				if (!myUserAuth) {
-					session.send({
-						action:     "follow_channel",
-						channel_id: channelId
-					});
-				}
+			if (channelId && !myUserAuth) {
+				session.send({
+					action:     "follow_channel",
+					channel_id: channelId
+				});
 			} else {
 				send();
 			}
