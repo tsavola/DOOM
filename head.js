@@ -2,7 +2,13 @@ function DOOM() {
 	var screen = document.getElementById("screen");
 	var ctx = screen.getContext("2d");
 	var frame;
-	var palette;
+	var palette = new Uint8Array(256 * 3);
+
+	for (var i = 0; i < 256; i++) {
+		palette[i * 3 + 0] = i;
+		palette[i * 3 + 1] = i;
+		palette[i * 3 + 2] = i;
+	}
 
 	var fps = document.getElementById("fps");
 	var rendered = 0;
@@ -17,9 +23,6 @@ function DOOM() {
 	setTimeout(updateFPS, 1000);
 
 	function handleFrame(width, height, array) {
-		if (!palette)
-			return;
-
 		if (!frame)
 			frame = ctx.createImageData(width, height);
 
