@@ -1,7 +1,10 @@
 function DOOM() {
+	var WIDTH = 320;
+	var HEIGHT = 200;
+
 	var screen = document.getElementById("screen");
 	var ctx = screen.getContext("2d");
-	var frame;
+	var frame = ctx.createImageData(WIDTH, HEIGHT);
 	var palette = new Uint8Array(256 * 3);
 
 	for (var i = 0; i < 256; i++) {
@@ -22,10 +25,7 @@ function DOOM() {
 
 	setTimeout(updateFPS, 1000);
 
-	function handleFrame(width, height, array) {
-		if (!frame)
-			frame = ctx.createImageData(width, height);
-
+	function handleFrame(array) {
 		for (var i = 0; i < array.byteLength; i++) {
 			var index = array[i];
 			var r = palette[index * 3 + 0];
@@ -131,7 +131,7 @@ function DOOM() {
 		}
 	});
 
-	var messageType = "github.com/tsavola/npipe";
+	var messageTypePrefix = "github.com/tsavola/npipe/";
 	var session = NinchatClient.newSession();
 	var peerUserId;
 	var channelId;
@@ -156,7 +156,7 @@ function DOOM() {
 	}
 
 	function receive(payload) {
-		var targetLength = -16;
+		var targetLength = -8;
 
 		for (var i in payload) {
 			targetLength += payload[i].byteLength;
@@ -167,8 +167,6 @@ function DOOM() {
 
 		var header = new Uint32Array(payload[0]);
 		var type = header[1];
-		var width = header[2];
-		var height = header[3];
 
 		var target = new Uint8Array(targetLength);
 		var targetOffset = 0;
@@ -176,18 +174,18 @@ function DOOM() {
 		for (var i in payload) {
 			var sourceOffset = 0;
 			if (i == 0)
-				sourceOffset = 16;
+				sourceOffset = 8;
 			var source = new Uint8Array(payload[i], sourceOffset);
 			target.set(source, targetOffset);
 			targetOffset += source.byteLength;
 		}
 
 		switch (type) {
-		case 1:
-			handleFrame(width, height, target);
+		case 0x66726d65: // frme
+			handleFrame(target);
 			break;
 
-		case 2:
+		case 0x706c7474: // pltt
 			handlePalette(target);
 			break;
 
@@ -198,13 +196,14 @@ function DOOM() {
 	}
 
 	function send() {
-		var buffer = new ArrayBuffer(4 + 6 * events.length);
+		var buffer = new ArrayBuffer(8 + 6 * events.length);
 		var data = new DataView(buffer);
 
 		data.setUint32(0, buffer.byteLength, true);
+		data.setUint32(4, 0x65766e74, true); // evnt
 
 		for (var i in events) {
-			var offset = 4 + 6 * i;
+			var offset = 8 + 6 * i;
 			var event = events[i];
 
 			data.setUint8(offset + 0, event[0]);
@@ -223,7 +222,7 @@ function DOOM() {
 		var header = {
 			action:       "send_message",
 			action_id:    null,
-			message_type: messageType,
+			message_type: messageTypePrefix + "evnt",
 			message_fold: true,
 			message_ttl:  0.1
 		};
@@ -303,7 +302,10 @@ function DOOM() {
 	});
 
 	var params = {
-		message_types: [messageType]
+		message_types: [
+			messageTypePrefix + "frme",
+			messageTypePrefix + "pltt"
+		]
 	};
 
 	if (myUserId) {

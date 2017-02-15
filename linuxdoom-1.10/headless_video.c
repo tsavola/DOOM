@@ -8,14 +8,16 @@
 #include "d_main.h"
 #include "v_video.h"
 
-#define MAX_RECV_SIZE    1024
-#define SEND_HEADER_SIZE 16
-#define SEND_FRAME_ID    1
-#define SEND_PALETTE_ID  2
+#define HEADER_SIZE   8
+#define MAX_RECV_SIZE 1024
+
+#define FRAME_ID    0x66726d65 // frme
+#define PALETTE_ID  0x706c7474 // pltt
+#define EVENTS_ID   0x65766e74 // evnt
 
 static int recv_fd = -1;
 static int send_fd = -1;
-static unsigned char image_msg_buf[SEND_HEADER_SIZE + SCREENWIDTH * SCREENHEIGHT];
+static unsigned char image_msg_buf[HEADER_SIZE + SCREENWIDTH * SCREENHEIGHT];
 
 static void recv_full(void *buf, size_t size)
 {
@@ -53,14 +55,12 @@ static void send_full(const void *data, size_t size)
 	}
 }
 
-static void send_packet(void *buf, size_t size, uint32_t type, uint32_t width, uint32_t height)
+static void send_packet(void *buf, size_t size, uint32_t type)
 {
 	uint32_t *header = buf;
 
 	header[0] = size;
 	header[1] = type;
-	header[2] = width;
-	header[3] = height;
 
 	send_full(buf, size);
 }
@@ -159,17 +159,23 @@ static void receive_events(void)
 {
 	static boolean mouse_buttons[4]; // index 0 is dummy
 
-	uint32_t size;
+	uint32_t header[2];
 
-	recv_full(&size, sizeof (size));
+	recv_full(header, sizeof (header));
+
+	uint32_t size = header[0];
+	uint32_t type = header[1];
 
 	if (size < sizeof (size) || size > MAX_RECV_SIZE)
 		exit(1);
 
-	uint32_t payload_size = size - sizeof (size);
+	uint32_t payload_size = size - sizeof (header);
 	char payload[payload_size];
 
 	recv_full(payload, payload_size);
+
+	if (type != EVENTS_ID)
+		return;
 
 	const struct ev_data_t *events = (struct ev_data_t *) payload;
 	int num_events = payload_size / sizeof (struct ev_data_t);
@@ -247,7 +253,7 @@ void I_UpdateNoBlit(void)
 
 void I_FinishUpdate(void)
 {
-	send_packet(image_msg_buf, sizeof (image_msg_buf), SEND_FRAME_ID, SCREENWIDTH, SCREENHEIGHT);
+	send_packet(image_msg_buf, sizeof (image_msg_buf), FRAME_ID);
 
 	receive_events();
 }
@@ -259,10 +265,10 @@ void I_ReadScreen(byte *scr)
 
 void I_SetPalette(byte *palette)
 {
-	char buf[SEND_HEADER_SIZE + 256 * 3];
+	char buf[HEADER_SIZE + 256 * 3];
 
-	memcpy(buf + SEND_HEADER_SIZE, palette, 256 * 3);
-	send_packet(buf, sizeof (buf), SEND_PALETTE_ID, 0, 0);
+	memcpy(buf + HEADER_SIZE, palette, 256 * 3);
+	send_packet(buf, sizeof (buf), PALETTE_ID);
 
 	receive_events();
 }
@@ -277,5 +283,5 @@ void I_InitGraphics(void)
 	if (send_fd < 3)
 		exit(1);
 
-	screens[0] = image_msg_buf + SEND_HEADER_SIZE;
+	screens[0] = image_msg_buf + HEADER_SIZE;
 }

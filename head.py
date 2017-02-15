@@ -44,7 +44,7 @@ def main():
     stdout_fd = proc.stdout.fileno()
 
     try:
-        proc.stdin.write(5 * pack("<I", 4))
+        proc.stdin.write(5 * pack("<II", 8, 0x65766e74))
 
         clock = pygame.time.Clock()
         font = pygame.font.SysFont(pygame.font.get_default_font(), 24)
@@ -82,26 +82,28 @@ def main():
                     sys.exit()
 
             if not os.environ.get("PASSIVE"):
-                proc.stdin.write(pack("<I", 4 + len(evinfos)) + evinfos)
+                proc.stdin.write(pack("<II", 8 + len(evinfos), 0x65766e74) + evinfos)
 
-            header = read_full(stdout_fd, 16, ungrab)
-            size, typ, width, height = unpack("<IIII", header)
-            if typ == 1:
-                data = read_full(stdout_fd, size - 16, ungrab)
-                array = numpy.ndarray((width, height), numpy.int8, data, order="F")
+            header = read_full(stdout_fd, 8, ungrab)
+            size, typ = unpack("<II", header)
+            data = read_full(stdout_fd, size - 8, ungrab)
+
+            if typ == 0x66726d65:  # frme
+                array = numpy.ndarray((WIDTH, HEIGHT), numpy.int8, data, order="F")
                 pygame.surfarray.blit_array(image, array)
-                pygame.transform.scale(image, (width * SCALE, height * SCALE), screen)
+                pygame.transform.scale(image, (WIDTH * SCALE, HEIGHT * SCALE), screen)
 
                 clock.tick()
                 screen.blit(font.render("FPS: %2.1f" % clock.get_fps(), False, color), (0, 0))
 
                 pygame.display.flip()
-            elif typ == 2:
-                data = read_full(stdout_fd, size - 16, ungrab)
+            elif typ == 0x706c7474:  # pltt
                 palette = [(ord(data[i + 0]), ord(data[i + 1]), ord(data[i + 2])) for i in xrange(0, 256 * 3, 3)]
                 screen.set_palette(palette)
+            elif typ == 0x65766e74:  # evnt
+                pass
             else:
-                assert False, repr(header)
+                assert False, hex(typ)
     finally:
         proc.terminate()
 
