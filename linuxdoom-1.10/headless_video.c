@@ -1,8 +1,12 @@
 #include <errno.h>
+#include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <fcntl.h>
+#include <sys/select.h>
+#include <sys/time.h>
 #include <unistd.h>
 
 #include "d_main.h"
@@ -19,22 +23,29 @@ static int recv_fd = -1;
 static int send_fd = -1;
 static unsigned char image_msg_buf[HEADER_SIZE + SCREENWIDTH * SCREENHEIGHT];
 
-static void recv_full(void *buf, size_t size)
+static boolean recv_full(void *buf, size_t size, boolean peek)
 {
 	for (size_t pos = 0; pos < size; ) {
 		ssize_t len = read(recv_fd, buf + pos, size - pos);
+
+		if (peek && pos == 0) {
+			if (len < 0 && (errno == EAGAIN || errno == EINTR))
+				return false;
+		}
 
 		if (len == 0)
 			exit(0);
 
 		if (len < 0) {
-			if (errno == EINTR)
+			if (errno == EAGAIN || errno == EINTR)
 				continue;
 			exit(1);
 		}
 
 		pos += len;
 	}
+
+	return true;
 }
 
 static void send_full(const void *data, size_t size)
@@ -158,80 +169,113 @@ struct ev_data_t {
 static void receive_events(void)
 {
 	static boolean mouse_buttons[4]; // index 0 is dummy
+	static uint64_t ticks;
 
-	uint32_t header[2];
-
-	recv_full(header, sizeof (header));
-
-	uint32_t size = header[0];
-	uint32_t type = header[1];
-
-	if (size < sizeof (size) || size > MAX_RECV_SIZE)
+	struct timeval tv;
+	if (gettimeofday(&tv, NULL) < 0)
 		exit(1);
 
-	uint32_t payload_size = size - sizeof (header);
-	char payload[payload_size];
+	uint64_t curr_ticks = (uint64_t) tv.tv_sec * 1000000UL + (uint64_t) tv.tv_usec;
 
-	recv_full(payload, payload_size);
+	if (ticks == 0)
+		ticks = curr_ticks;
 
-	if (type != EVENTS_ID)
-		return;
+	while (ticks <= curr_ticks)
+		ticks += 1000000UL / 35UL;
 
-	const struct ev_data_t *events = (struct ev_data_t *) payload;
-	int num_events = payload_size / sizeof (struct ev_data_t);
+	while (ticks > curr_ticks) {
+		fd_set rfds;
+		FD_ZERO(&rfds);
+		FD_SET(recv_fd, &rfds);
 
-	for (int i = 0; i < num_events; i++) {
-		const struct ev_data_t *ev = &events[i];
+		tv.tv_sec = 0;
+		tv.tv_usec = ticks - curr_ticks;
 
-		event_t event = { 0 };
+		int count = select(recv_fd+1, &rfds, NULL, NULL, &tv);
+		if (count < 0)
+			exit(1);
 
-		switch (ev->type) {
-		case 0: // key press
-			event.type = ev_keydown;
-			event.data1 = translate_key(ev->key);
-			D_PostEvent(&event);
+		if (count == 0 || !FD_ISSET(recv_fd, &rfds))
 			break;
 
-		case 1: // key release
-			event.type = ev_keyup;
-			event.data1 = translate_key(ev->key);
-			D_PostEvent(&event);
-			break;
+		while (1) {
+			uint32_t header[2];
+			if (!recv_full(header, sizeof (header), true))
+				break;
 
-		case 2: // button press
-			mouse_buttons[(int) ev->button] = true;
+			uint32_t size = header[0];
+			uint32_t type = header[1];
+			if (size < sizeof (header) || size > MAX_RECV_SIZE)
+				exit(1);
 
-			event.type = ev_mouse;
-			if (mouse_buttons[1]) event.data1 |= 1;
-			if (mouse_buttons[2]) event.data1 |= 2;
-			if (mouse_buttons[3]) event.data1 |= 4;
+			uint32_t payload_size = size - sizeof (header);
+			char payload[payload_size];
+			recv_full(payload, payload_size, false);
 
-			D_PostEvent(&event);
-			break;
+			if (type == EVENTS_ID) {
+				const struct ev_data_t *events = (struct ev_data_t *) payload;
+				int num_events = payload_size / sizeof (struct ev_data_t);
 
-		case 3: // button release
-			mouse_buttons[(int) ev->button] = false;
+				for (int i = 0; i < num_events; i++) {
+					const struct ev_data_t *ev = &events[i];
 
-			event.type = ev_mouse;
-			if (mouse_buttons[1]) event.data1 |= 1;
-			if (mouse_buttons[2]) event.data1 |= 2;
-			if (mouse_buttons[3]) event.data1 |= 4;
+					event_t event = { 0 };
 
-			D_PostEvent(&event);
-			break;
+					switch (ev->type) {
+					case 0: // key press
+						event.type = ev_keydown;
+						event.data1 = translate_key(ev->key);
+						D_PostEvent(&event);
+						break;
 
-		case 4: // motion notify
-			event.type = ev_mouse;
-			if (mouse_buttons[1]) event.data1 |= 1;
-			if (mouse_buttons[2]) event.data1 |= 2;
-			if (mouse_buttons[3]) event.data1 |= 4;
+					case 1: // key release
+						event.type = ev_keyup;
+						event.data1 = translate_key(ev->key);
+						D_PostEvent(&event);
+						break;
 
-			event.data2 = ev->move_x << 2;
-			event.data3 = -ev->move_y << 2;
+					case 2: // button press
+						mouse_buttons[(int) ev->button] = true;
 
-			D_PostEvent(&event);
-			break;
+						event.type = ev_mouse;
+						if (mouse_buttons[1]) event.data1 |= 1;
+						if (mouse_buttons[2]) event.data1 |= 2;
+						if (mouse_buttons[3]) event.data1 |= 4;
+
+						D_PostEvent(&event);
+						break;
+
+					case 3: // button release
+						mouse_buttons[(int) ev->button] = false;
+
+						event.type = ev_mouse;
+						if (mouse_buttons[1]) event.data1 |= 1;
+						if (mouse_buttons[2]) event.data1 |= 2;
+						if (mouse_buttons[3]) event.data1 |= 4;
+
+						D_PostEvent(&event);
+						break;
+
+					case 4: // motion notify
+						event.type = ev_mouse;
+						if (mouse_buttons[1]) event.data1 |= 1;
+						if (mouse_buttons[2]) event.data1 |= 2;
+						if (mouse_buttons[3]) event.data1 |= 4;
+
+						event.data2 = ev->move_x << 2;
+						event.data3 = -ev->move_y << 2;
+
+						D_PostEvent(&event);
+						break;
+					}
+				}
+			}
 		}
+
+		if (gettimeofday(&tv, NULL) < 0)
+			exit(1);
+
+		curr_ticks = (uint64_t) tv.tv_sec * 1000000UL + (uint64_t) tv.tv_usec;
 	}
 }
 
@@ -269,14 +313,18 @@ void I_SetPalette(byte *palette)
 
 	memcpy(buf + HEADER_SIZE, palette, 256 * 3);
 	send_packet(buf, sizeof (buf), PALETTE_ID);
-
-	receive_events();
 }
 
 void I_InitGraphics(void)
 {
 	recv_fd = atoi(getenv("RECV_FD"));
 	if (recv_fd < 3)
+		exit(1);
+
+	int flags = fcntl(recv_fd, F_GETFL);
+	if (flags < 0)
+		exit(1);
+	if (fcntl(recv_fd, F_SETFL, flags|O_NONBLOCK) < 0)
 		exit(1);
 
 	send_fd = atoi(getenv("SEND_FD"));

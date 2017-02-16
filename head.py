@@ -81,7 +81,7 @@ def main():
                 elif event.type == QUIT:
                     sys.exit()
 
-            if not os.environ.get("PASSIVE"):
+            if evinfos:
                 proc.stdin.write(pack("<II", 8 + len(evinfos), 0x65766e74) + evinfos)
 
             header = read_full(stdout_fd, 8, ungrab)

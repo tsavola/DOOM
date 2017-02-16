@@ -195,7 +195,10 @@ function DOOM() {
 		}
 	}
 
-	function send() {
+	function send(force) {
+		if (events.length == 0 && !force)
+			return;
+
 		var buffer = new ArrayBuffer(8 + 6 * events.length);
 		var data = new DataView(buffer);
 
@@ -255,7 +258,7 @@ function DOOM() {
 					channel_id: channelId
 				});
 			} else {
-				send();
+				send(true);
 			}
 			break;
 
@@ -282,7 +285,7 @@ function DOOM() {
 				receive(payload);
 
 				if (myUserAuth)
-					send();
+					send(false);
 			}
 			break;
 
