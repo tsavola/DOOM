@@ -80,23 +80,71 @@ static void handle_events(uint64_t *events, int num_events)
 	static boolean mouse_buttons[4]; // index 0 is dummy
 
 	for (int i = 0; i < num_events; i++) {
-		uint64_t data = events[i];
+		union __attribute__ ((packed)) {
+			uint64_t data;
+			struct __attribute__ ((packed)) {
+				uint8_t type;
+				union __attribute__ ((packed)) {
+					struct __attribute__ ((packed)) {
+						uint8_t key;
+					};
+					struct __attribute__ ((packed)) {
+						uint8_t button;
+					};
+					struct __attribute__ ((packed)) {
+						uint8_t pad[3];
+						int16_t move_x;
+						int16_t move_y;
+					};
+				};
+			};
+		} u;
+		u.data = events[i];
+
 		event_t event = {0};
 
-		switch (data & 255) {
+		switch (u.type) {
 		case 1: // quit
 			gate_exit(0);
 			break;
 
 		case 2: // key press
 			event.type = ev_keydown;
-			event.data1 = translate_key((data >> 8) & 255);
+			event.data1 = translate_key(u.key);
 			D_PostEvent(&event);
 			break;
 
 		case 3: // key release
 			event.type = ev_keyup;
-			event.data1 = translate_key((data >> 8) & 255);
+			event.data1 = translate_key(u.key);
+			D_PostEvent(&event);
+			break;
+
+		case 4: // button press
+			mouse_buttons[u.button] = true;
+			event.type = ev_mouse;
+			if (mouse_buttons[1]) event.data1 |= 1;
+			if (mouse_buttons[2]) event.data1 |= 2;
+			if (mouse_buttons[3]) event.data1 |= 4;
+			D_PostEvent(&event);
+			break;
+
+		case 5: // button release
+			mouse_buttons[u.button] = false;
+			event.type = ev_mouse;
+			if (mouse_buttons[1]) event.data1 |= 1;
+			if (mouse_buttons[2]) event.data1 |= 2;
+			if (mouse_buttons[3]) event.data1 |= 4;
+			D_PostEvent(&event);
+			break;
+
+		case 6: // mouse motion
+			event.type = ev_mouse;
+			if (mouse_buttons[1]) event.data1 |= 1;
+			if (mouse_buttons[2]) event.data1 |= 2;
+			if (mouse_buttons[3]) event.data1 |= 4;
+			event.data2 = u.move_x * 8;
+			event.data3 = -u.move_y * 8;
 			D_PostEvent(&event);
 			break;
 		}
