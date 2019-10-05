@@ -33,13 +33,10 @@ void *realloc(void *oldptr, size_t size)
 
 int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
-	struct gate_timespec ts;
-	int ret = gate_gettime(GATE_CLOCK_MONOTONIC, &ts);
-	if (ret >= 0) {
-		tv->tv_sec = ts.sec;
-		tv->tv_usec = ts.nsec / 1000;
-	}
-	return ret;
+	uint64_t t = gate_clock_realtime();
+	tv->tv_sec = t / 1000000000;
+	tv->tv_usec = (t / 1000) % 1000000;
+	return 0;
 }
 
 void *memcpy(void *dest, const void *src, size_t n)

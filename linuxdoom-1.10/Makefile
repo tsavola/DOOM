@@ -85,7 +85,7 @@ all:	 $(O)/doom.wasm
 
 clean:
 	rm -f *.o *~ *.flc
-	rm -f linux/*
+	rm -rf linux/*
 
 $(O)/doom.wasm:	$(OBJS) $(O)/i_main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \

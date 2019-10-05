@@ -1,4 +1,4 @@
-__gate_debug
-__gate_exit
 __gate_io_65536
-__gate_time
+__wasi_clock_time_get
+__wasi_fd_write
+__wasi_proc_exit
