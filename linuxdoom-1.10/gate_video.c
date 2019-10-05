@@ -182,7 +182,7 @@ void I_FinishUpdate(void)
 {
 	rasterize(packet);
 
-	uint64_t events[(GATE_MAX_PACKET_SIZE - sizeof(struct gate_packet)) / 8];
+	uint64_t events[(GATE_MAX_RECV_SIZE - sizeof(struct gate_packet)) / 8];
 	int num_events = receive_raster_events(events, sizeof events / sizeof events[0]);
 	handle_events(events, num_events);
 }

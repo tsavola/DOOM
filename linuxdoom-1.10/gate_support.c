@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-static char recvbuf[GATE_MAX_PACKET_SIZE];
+static char recvbuf[GATE_MAX_RECV_SIZE];
 static size_t recvlen;
 
 static struct gate_packet *receive_packet(void)
@@ -14,7 +14,7 @@ static struct gate_packet *receive_packet(void)
 	struct gate_packet *header = (struct gate_packet *) recvbuf;
 	size_t aligned_size = GATE_ALIGN_PACKET(header->size);
 
-	if (aligned_size > GATE_MAX_PACKET_SIZE) {
+	if (aligned_size > GATE_MAX_RECV_SIZE) {
 		__gate_debug_str("bug: received packet size exceeds maximum packet size\n");
 		gate_exit(1);
 	}
