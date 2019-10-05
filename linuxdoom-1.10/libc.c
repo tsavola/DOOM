@@ -12,7 +12,7 @@
 
 #include "gate_support.h"
 
-static char heap[16 * 1024 * 1024];
+static char heap[8 * 1024 * 1024];
 static size_t allocated;
 
 void *realloc(void *oldptr, size_t size)
