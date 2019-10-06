@@ -89,7 +89,8 @@ clean:
 
 $(O)/doom.wasm:	$(OBJS) $(O)/i_main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
-	-o $(O)/doom.wasm $(LIBS)
+	-o $(O)/doom0.wasm $(LIBS)
+	wasm-start -s D_DoomMain -x -o $(O)/doom.wasm $(O)/doom0.wasm
 
 $(O)/%.o:	%.c $(wildcard *.h libc/*.h) Makefile
 	@ mkdir -p $(dir $@)
