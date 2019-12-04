@@ -12,6 +12,12 @@
 
 #include "gate_support.h"
 
+#ifndef WAD
+#define WAD "doom1"
+#endif
+
+#define FILENAME ("DOOMWADDIR/" WAD ".wad")
+
 static char heap[8 * 1024 * 1024];
 static size_t allocated;
 
@@ -166,13 +172,13 @@ int atoi(const char *nptr)
 
 int access(const char *pathname, int mode)
 {
-	if (strcmp(pathname, "DOOMWADDIR/doom1.wad") != 0)
+	if (strcmp(pathname, FILENAME) != 0)
 		return -1;
 
 	return 0;
 }
 
-static char filebuf[4196020]; // doom1.wad
+static char filebuf[17420832];
 static int filelen = -1;
 static int filepos;
 
@@ -181,7 +187,7 @@ int open(const char *pathname, int flags, ...)
 	if (filelen >= 0)
 		return -1;
 
-	if (strcmp(pathname, "DOOMWADDIR/doom1.wad") != 0)
+	if (strcmp(pathname, FILENAME) != 0)
 		return -1;
 
 	filelen = read_origin(filebuf, sizeof filebuf);

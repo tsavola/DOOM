@@ -153,11 +153,6 @@ int read_origin(void *buf, size_t bufsize)
 		}
 
 		consume_packet(packet);
-
-#if 1		// TODO: remove this hack
-		if (offset == bufsize)
-			eof = true;
-#endif
 	} while (!eof);
 
 	return offset;
