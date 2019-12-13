@@ -62,6 +62,8 @@ static void send_packet(const void *sendbuf, size_t sendbufsize)
 static int16_t origin = -1;
 static int16_t raster = -1;
 
+static int32_t stream = -1;
+
 void init_gate(void)
 {
 	struct discover {
@@ -102,11 +104,33 @@ void init_gate(void)
 		gate_debug("raster service unavailable\n");
 
 	consume_packet(packet);
+
+	const struct gate_packet accept = {
+		.size = sizeof accept,
+		.code = origin,
+		.domain = GATE_PACKET_DOMAIN_CALL,
+	};
+
+	send_packet(&accept, sizeof accept);
+
+	packet = receive_packet();
+
+	if (packet->code != origin || packet->domain != GATE_PACKET_DOMAIN_CALL || packet->size != sizeof(struct gate_packet) + 8) {
+		__gate_debug_str("error: expected accept reply packet from origin\n");
+		gate_exit(1);
+	}
+
+	stream = ((int32_t *) (packet + 1))[0];
+	int32_t error = ((int32_t *) (packet + 1))[1];
+	if (error != 0) {
+		__gate_debug_str("error: origin stream accept error\n");
+		gate_exit(1);
+	}
 }
 
 int read_origin(void *buf, size_t bufsize)
 {
-	if (origin < 0)
+	if (origin < 0 || stream < 0)
 		return -1;
 
 	struct {
@@ -121,6 +145,7 @@ int read_origin(void *buf, size_t bufsize)
 			},
 		},
 		.flow = {
+			.id = stream,
 			.increment = bufsize,
 		},
 	};
@@ -139,6 +164,12 @@ int read_origin(void *buf, size_t bufsize)
 		}
 
 		if (packet->domain == GATE_PACKET_DOMAIN_DATA) {
+			const struct gate_data_packet *datapacket = (void *) packet;
+			if (datapacket->id != stream) {
+				__gate_debug_str("TODO: received packet from origin with unrelated stream\n");
+				gate_exit(1);
+			}
+
 			int datalen = packet->size - sizeof(struct gate_data_packet);
 			if (datalen > bufsize - offset) {
 				__gate_debug_str("received too much data from origin\n");
