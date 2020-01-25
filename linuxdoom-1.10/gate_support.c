@@ -68,7 +68,7 @@ void init_gate(void)
 {
 	struct discover {
 		struct gate_service_name_packet header;
-		char names[6 + 1 + 19 + 1];
+		char names[6 + 1 + 20 + 1];
 	};
 
 	union {
@@ -80,7 +80,7 @@ void init_gate(void)
 	buf.packet.header.header.size = sizeof(struct discover);
 	buf.packet.header.header.code = GATE_PACKET_CODE_SERVICES;
 	buf.packet.header.count = 2;
-	memcpy(buf.packet.header.names, "origin\0savo.la/gate/raster", sizeof buf.packet.names);
+	memcpy(buf.packet.header.names, "origin\0gate.computer/raster", sizeof buf.packet.names);
 
 	send_packet(&buf, sizeof buf);
 
