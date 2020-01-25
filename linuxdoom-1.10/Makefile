@@ -7,7 +7,7 @@
 CC=  clang
 
 CPPFLAGS=-nostdlibinc -I$(GATEDIR)/include -Ilibc -DNORMALUNIX -DLINUX
-CFLAGS=--target=wasm32-unknown-unknown -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable
+CFLAGS=--target=wasm32-unknown-unknown -g -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable
 LDFLAGS=-nostdlib -Wl,--entry=D_DoomMain -Wl,--allow-undefined-file=gate_abi.txt
 LIBS=
 
