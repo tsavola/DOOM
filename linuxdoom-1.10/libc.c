@@ -255,4 +255,10 @@ void _putchar(char c)
 	gate_debug_data(&c, 1);
 }
 
+void _start(void)
+{
+	void D_DoomMain(void);
+	D_DoomMain();
+}
+
 FILE *const stdout;

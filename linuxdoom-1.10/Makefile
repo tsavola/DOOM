@@ -8,7 +8,7 @@ CC=  clang
 
 CPPFLAGS=-nostdlibinc -I$(GATEDIR)/include -Ilibc -DNORMALUNIX -DLINUX
 CFLAGS=--target=wasm32-unknown-unknown -g -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable
-LDFLAGS=-nostdlib -Wl,--entry=D_DoomMain -Wl,--allow-undefined-file=gate_abi.txt
+LDFLAGS=-nostdlib -Wl,--allow-undefined-file=gate_abi.txt
 LIBS=
 
 # subdirectory for objects
@@ -89,8 +89,7 @@ clean:
 
 $(O)/doom.wasm:	$(OBJS) $(O)/i_main.o
 	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) $(O)/i_main.o \
-	-o $(O)/doom0.wasm $(LIBS)
-	wasm-start -s D_DoomMain -x -o $(O)/doom.wasm $(O)/doom0.wasm
+	-o $(O)/doom.wasm $(LIBS)
 
 $(O)/%.o:	%.c $(wildcard *.h libc/*.h) Makefile
 	@ mkdir -p $(dir $@)
