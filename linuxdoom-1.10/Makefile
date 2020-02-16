@@ -5,6 +5,7 @@
 # $Log:$
 #
 CC=  clang
+GATEDIR ?= ../../gate
 
 CPPFLAGS=-nostdlibinc -I$(GATEDIR)/include -Ilibc -DNORMALUNIX -DLINUX
 CFLAGS=--target=wasm32-unknown-unknown -g -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable
