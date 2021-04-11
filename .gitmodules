@@ -1,3 +1,0 @@
-[submodule "linuxdoom-1.10/libc/printf"]
-	path = linuxdoom-1.10/libc/printf
-	url = https://github.com/mpaland/printf.git
