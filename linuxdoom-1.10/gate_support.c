@@ -9,7 +9,7 @@ static size_t recvlen;
 static struct gate_packet *receive_packet(void)
 {
 	while (recvlen < sizeof(struct gate_packet))
-		recvlen += gate_recv(recvbuf + recvlen, sizeof recvbuf - recvlen, GATE_IO_WAIT);
+		recvlen += gate_recv(recvbuf + recvlen, sizeof recvbuf - recvlen, -1);
 
 	struct gate_packet *header = (struct gate_packet *) recvbuf;
 	size_t aligned_size = GATE_ALIGN_PACKET(header->size);
@@ -20,7 +20,7 @@ static struct gate_packet *receive_packet(void)
 	}
 
 	while (recvlen < aligned_size)
-		recvlen += gate_recv(recvbuf + recvlen, sizeof recvbuf - recvlen, GATE_IO_WAIT);
+		recvlen += gate_recv(recvbuf + recvlen, sizeof recvbuf - recvlen, -1);
 
 	return header;
 }
@@ -53,7 +53,7 @@ static void send_packet(const void *sendbuf, size_t sendbufsize)
 
 		size_t recvn;
 		size_t sendn;
-		gate_io(&recv, 1, &recvn, &send, 1, &sendn, GATE_IO_WAIT);
+		gate_io(&recv, 1, &recvn, &send, 1, &sendn, -1);
 		recvlen += recvn;
 		sendlen += sendn;
 	}
