@@ -53,7 +53,7 @@ static void send_packet(const void *sendbuf, size_t sendbufsize)
 
 		size_t recvn;
 		size_t sendn;
-		gate_io(&recv, 1, &recvn, &send, 1, &sendn, -1);
+		gate_io(&recv, 1, &recvn, &send, 1, &sendn, -1, NULL);
 		recvlen += recvn;
 		sendlen += sendn;
 	}
@@ -146,7 +146,7 @@ int read_origin(void *buf, size_t bufsize)
 		},
 		.flow = {
 			.id = stream,
-			.increment = bufsize,
+			.value = bufsize,
 		},
 	};
 
