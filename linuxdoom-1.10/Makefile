@@ -7,8 +7,8 @@
 CC=  clang
 GATEDIR ?= ../../gate
 
-CPPFLAGS=-nostdlibinc -I$(GATEDIR)/include -Ilibc -DNORMALUNIX -DLINUX
-CFLAGS=--target=wasm32-unknown-unknown -g -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable
+CPPFLAGS=-nostdlibinc -I$(GATEDIR)/gate/include -Ilibc -DNORMALUNIX -DLINUX
+CFLAGS=--target=wasm32-unknown-unknown -g -fomit-frame-pointer -fno-builtin-malloc -fno-builtin-realloc -O2 -Wall -Wno-unused-variable -Wno-implicit-int
 LDFLAGS=-nostdlib -Wl,--allow-undefined-file=gate_abi.txt
 LIBS=
 
